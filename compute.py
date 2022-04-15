@@ -40,23 +40,86 @@ def quadratic_minimum(func):
     return float(minimum_x), float(minimum_y)
 
 
-def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.001, num_of_iterations=20):
+def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.001, num_of_iterations=20, w=20):
+    """ Runs the algorithm.
+
+        Parameters:
+            func(sympy lambdified): The
+
+        Returns:
+            data: {
+                    "steps_x": consequent x values through the steps,
+                    "optimized_x": value of the last point, which is also contained in steps_x,
+                    "iterations": number of iterations,
+                    "x": x
+                }
+
+    """
+    tau_n = None
     b = (a + c) / 2
+    c_max = c
+    a_min = a
     iteration = 0
     consequent_x = [[x0[0]], [x0[1]]]
-    while abs(c - a) > epsilon1 and iteration < num_of_iterations and abs(func(a) - func(c)) > epsilon2:  # 3 conditions for the while loop
+    cond_1 = abs(c - a)
+    cond_3 = abs(func(a) - func(c))
+    break_condition = None
+    while True:  # 3 conditions for the while loop
+        if iteration >= num_of_iterations:
+            break_condition = 2
+            break
         # print(f"{Poly(func_org) = }, {a = }, {b = }, {c = }")
         approx = quadr_approx(func, a, b, c)
         # print(Poly(approx))
-        consequent_x[0].append((x0 + (a + c) / 2 * d)[0])
-        consequent_x[1].append((x0 + (a + c) / 2 * d)[1])
+
+        # #testing
+        print(f"iteration: {iteration}, a={a}, b={b}, c={c}")
+        # t = np.linspace(-25, 25, 1000)
+        # plt.figure()
+        # plt.plot(t, func(t))
+        # plt.scatter([a, b, c], [func(a), func(b), func(c)])
+        # plt.show()
+        # #testing
 
         tau_n, _ = quadratic_minimum(approx)
+        print(f"{tau_n = }")
         # print(f"{tau_n = }")
+
+        # if tau_n is not in [a, c] then end the algorithm, the optimum a or c for which func() has the lowest value?
+        # if tau_n
+
+        # if tau_n is at a or c
+        if tau_n == a or tau_n == c: ######### not well tested yet
+            break
+
+        # if tau_n is outside the specified range,
+        # return the value of which the function takes the smaller value
+        # x_max = x0 + w * d  ###############??????????????????
+        # x_next = x0 + tau_n * d  ###############??????????????????
+        # cond = abs(x_next) - abs(x_max)  ###############??????????????????
+        if tau_n < a_min:
+            tau_n = a_min
+            break
+        if tau_n > c_max:
+            tau_n = c_max
+            break
+            # or tau_n > c_max:# or abs(x_next) - abs(x_max) > 0:# or tau_n < a or tau_n > c:
+            # print(f"tau_n < a or tau_n > c_max, {tau_n =}")
+            # a_val = func(a)
+            # c_val = func(c)
+            # if a_val < c_val:
+            #     tau_n = 0
+            # else:
+            #     tau_n = w
+            # break_condition = 3#################
+            # break
+
+        consequent_x[0].append((x0 + tau_n * d)[0])  # was tau_n / 2
+        consequent_x[1].append((x0 + tau_n * d)[1])  # was tau_n / 2
 
         if b < tau_n:
             if func(b) >= func(tau_n):
-                print(f"{b} < {tau_n} && {func(b)} >= {func(tau_n)}")
+                # print(f"{b} < {tau_n} && {func(b)} >= {func(tau_n)}")
                 a = b
                 b = tau_n
                 c = c
@@ -69,8 +132,8 @@ def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.0
             if func(b) >= func(tau_n):
                 # print(f"{b} >= {tau_n} && {func(b)} >= {func(tau_n)}")
                 a = a
-                b = tau_n
                 c = b
+                b = tau_n
             else:
                 # print(f"{b} >= {tau_n} && {func(b)} < {func(tau_n)}")
                 a = tau_n
@@ -80,22 +143,36 @@ def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.0
             a = b
             c = b
             iteration += 1
+            break_condition = 3###################
             break
         iteration += 1
         # print(iteration)
 
-    tau = 1 / 2 * (a + c)
-    print(tau)
-    x = x0 + tau * d
-    print(f"{x = }")
+        if abs(c-a) < epsilon1:
+            break_condition = 1
+            break
+        if abs(func(a) - func(c)) < epsilon2:
+            break_condition = 3
+            break
 
-    last_point = ((x0 + (a+c)/2 * d)[0], (x0 + (a+c)/2 * d)[1])
+    print(f"******* break condition = {break_condition} ********")
+
+    if tau_n:
+        tau = tau_n
+    else:
+        tau = 0
+    print(tau)
+    print(f"x0({x0} + tau({tau} * d{d} = optimized_x")
+    optimized_x = x0 + tau * d
+    print(f"{optimized_x = }")
+
+    consequent_x[0].append(optimized_x[0])
+    consequent_x[1].append(optimized_x[1])
 
     data = {
         "steps_x": consequent_x,
-        "last_point": last_point,
+        "optimized_x": optimized_x,
         "iterations": iteration,
-        "x": x
     }
 
     return data
