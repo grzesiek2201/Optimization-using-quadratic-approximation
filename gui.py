@@ -195,7 +195,7 @@ class Ui_MainWindow(object):
         w = float(self.lineEdit_7.text())
         x0 = np.array(nums_from_string.get_nums(x0))
         d = np.array(nums_from_string.get_nums(d))
-
+        # zabezpieczyć przed złym podaniem danych, np. 0.5/3 daje dwie liczby
         data = {
             "func": func,
             "x0": x0,
@@ -213,10 +213,17 @@ class Ui_MainWindow(object):
         x = np.array([x1, x2])
         x0 = np.array([data["x0"][0], data["x0"][1]])
         d = np.array([data["d"][0], data["d"][1]])
-        d = d / d[0]  # normalize the direction
+        if d[0] != 0:
+            d = d / abs(max(abs(d)))  # normalize the direction
+        else:
+            d = d / abs(d[1])
         x_next = x0 + tau * d
-        a = x0[0]
-        c = a + data["w"]
+        print(f"{x_next = }") ################
+        a = 0 #np.sqrt(np.sum(np.power(x0[0], 2))) # was x[0]
+
+        w = data["w"]  # / np.sqrt(np.sum(np.power(d, 2)))
+        # print(f"{w = }")
+        c = a + w
 
         func_org = substitute(func_org,
                               x_next)  # create one-variable function (of tau) in a given direction (sympified)
@@ -227,8 +234,9 @@ class Ui_MainWindow(object):
             "iso_func": iso_func,
             "range": (a, c),
             "x0": x0,
-            "d" : data["d"],
+            "d" : d,
             "l": data["l"],
+            "w": w,
         }
         return processed_data
 
@@ -242,17 +250,17 @@ class Ui_MainWindow(object):
         x0 = processed_data["x0"]
         d = processed_data["d"]
         l = processed_data["l"]
+        w = processed_data["w"]
 
-        return algorithm(func=func, a=a, c=c, d=d, x0=x0, num_of_iterations=l)
+        return algorithm(func=func, a=a, c=c, d=d, x0=x0, num_of_iterations=l, w=w)
 
     def plot_results(self, results, processed_data):
         func = processed_data["func"]
         iso_func = processed_data["iso_func"]
         x0 = processed_data["x0"]
         consequent_x = results["steps_x"]
-        last_point = results["last_point"]
+        optimized_x = results["optimized_x"]
         iteration = results["iterations"]
-        x = results["x"]
 
         x_min = [min(consequent_x[0]), min(consequent_x[1])]
         x_max = [max(consequent_x[0]), max(consequent_x[1])]
@@ -260,11 +268,11 @@ class Ui_MainWindow(object):
 
 
         self.plot_isohypse([iso_range[0], iso_range[1]], iso_func)  # plot isohypse
-        plt.plot((x0[0], x_max[0]), (x0[1], x_max[1]), linewidth=0.4)  # plot a line
+        plt.plot(consequent_x[0], consequent_x[1], linewidth=0.4)  # plot a line
         plt.scatter(consequent_x[0], consequent_x[1], c='b', s=20)  # plot every iteration's point
-        plt.scatter(last_point[0], last_point[1], c='r', marker='x', s=80)  # plot the result
-        plt.scatter(x0[0], x0[1], c='#00D100', marker='x', s=80, alpha=1)  # plot the starting point
-        plt.title(f"Optimal solution in given direction is ({round(x[0], 3)}, {round(x[1], 3)}).\n"
+        plt.scatter(x0[0], x0[1], c='r', marker='x', s=80, alpha=1)  # plot the starting point
+        plt.scatter(optimized_x[0], optimized_x[1], c='#00D100', marker='x', s=80)  # plot the result
+        plt.title(f"Optimal solution in given direction is ({round(optimized_x[0], 3)}, {round(optimized_x[1], 3)}).\n"
                   f"Number of iterations: {iteration}.")
         self.canvas.draw()
 
