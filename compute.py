@@ -6,14 +6,18 @@ import matplotlib.pyplot as plt
 x1, x2, x3, x4, x5, tau, d = smp.symbols('x1 x2 x3 x4 x5 tau d')
 
 
-def substitute(func, values=(1, 1)):
-    func = func.subs(x1, values[0])
-    # print(f"substitute {values[0] = }")
-    func = func.subs(x2, values[1])
+def substitute(func, xes=(x1, x2), values=(1, 1)):
+    for x, val in zip(xes, values):
+        func = func.subs(x, val)
+    # func = func.subs(x1, values[0])
+    # # print(f"substitute {values[0] = }")
+    # func = func.subs(x2, values[1])
+    # func = func.subs(x3, values[2])
+    # func = func.subs(x4, values[3])
+    # func = func.subs(x5, values[4])
     # print(f"substitute {values[1] = }")
     # print(f"function after substition {func = }")
     return func
-
 
 
 def quadr_approx(func, a, b, c):
@@ -23,24 +27,26 @@ def quadr_approx(func, a, b, c):
         a -= 0.001
     if b == c:
         c += 0.001
-    return ((func(a)*(tau-b)*(tau-c)) / ((a-b)*(a-c)) + (func(b)*(tau-a)*(tau-c)) / ((b-a)*(b-c)) +\
-        (func(c)*(tau-a)*(tau-b)) / ((c-a)*(c-b)))
+    return ((func(a)*(tau-b)*(tau-c)) / ((a-b)*(a-c)) + (func(b)*(tau-a)*(tau-c)) / ((b-a)*(b-c)) +
+            (func(c)*(tau-a)*(tau-b)) / ((c-a)*(c-b)))
 
 
 def quadratic_minimum(func):
     polynomial = Poly(func)
     coeffs = polynomial.all_coeffs()
+    # 3.03282947879229e+15*(tau - 3.47826086956522)*(12.9384615384616*tau - 41.8011834319529) - 3.03282947879231e+15*(tau - 3.47826086956522)*(12.9384615384616*tau - 41.8011834319529) + 16.3259678597517*(tau - 3.23076923076923)*(13.296786389414*tau - 42.95884833503)???
+    # print(f"{func = }, {polynomial = }, {coeffs = }")
+    # if polynomial.degree > 1:
     delta = coeffs[1]**2 - 4*coeffs[0]*coeffs[2]
     minimum_y = -delta / (4*coeffs[0])
     if coeffs[0] == coeffs[1]:
         minimum_x = coeffs[0]
     else:
         minimum_x = -coeffs[1] / (2*coeffs[0])
-    # print(f"{coeffs = }")
     return float(minimum_x), float(minimum_y)
 
 
-def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.001, num_of_iterations=20, w=20):
+def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.001, num_of_iterations=20):
     """ Runs the algorithm.
 
         Parameters:
@@ -60,9 +66,9 @@ def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.0
     c_max = c
     a_min = a
     iteration = 0
-    consequent_x = [[x0[0]], [x0[1]]]
-    cond_1 = abs(c - a)
-    cond_3 = abs(func(a) - func(c))
+    consequent_x = [[x] for x in list(x0)]  # [x0[0]], [x0[1]]]
+    # cond_1 = abs(c - a)
+    # cond_3 = abs(func(a) - func(c))
     break_condition = None
     while True:  # 3 conditions for the while loop
         if iteration >= num_of_iterations:
@@ -81,12 +87,15 @@ def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.0
         # plt.show()
         # #testing
 
-        tau_n, _ = quadratic_minimum(approx)
+        try:
+            tau_n, _ = quadratic_minimum(approx)
+        except Exception as e:
+            print("***********")
+            print(e)
+            print("***********")
         print(f"{tau_n = }")
-        # print(f"{tau_n = }")
 
         # if tau_n is not in [a, c] then end the algorithm, the optimum a or c for which func() has the lowest value?
-        # if tau_n
 
         # if tau_n is at a or c
         if tau_n == a or tau_n == c: ######### not well tested yet
@@ -114,8 +123,10 @@ def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.0
             # break_condition = 3#################
             # break
 
-        consequent_x[0].append((x0 + tau_n * d)[0])  # was tau_n / 2
-        consequent_x[1].append((x0 + tau_n * d)[1])  # was tau_n / 2
+        for i in range(len(x0)):
+            consequent_x[i].append((x0 + tau_n * d)[i])
+        # consequent_x[0].append((x0 + tau_n * d)[0])  # was tau_n / 2
+        # consequent_x[1].append((x0 + tau_n * d)[1])  # was tau_n / 2
 
         if b < tau_n:
             if func(b) >= func(tau_n):
@@ -166,8 +177,10 @@ def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.0
     optimized_x = x0 + tau * d
     print(f"{optimized_x = }")
 
-    consequent_x[0].append(optimized_x[0])
-    consequent_x[1].append(optimized_x[1])
+    for i in range(len(x0)):
+        consequent_x[i].append(optimized_x[i])
+    # consequent_x[0].append(optimized_x[0])
+    # consequent_x[1].append(optimized_x[1])
 
     data = {
         "steps_x": consequent_x,
