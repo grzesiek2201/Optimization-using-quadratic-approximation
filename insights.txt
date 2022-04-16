@@ -4,3 +4,11 @@
 - problem jeśli x0=(-3, -2.8), d=(0, -1), w=2; może dla ujemnego x0 odwraca się liczenie d? idk
 
 - eason function - znajduje złe minimum dla zbyt dużych długości przedziałów
+
+- nie znajduje funkcji Beale'a
+
+- może się zdarzyć, że aproksymacja funkcją kwadratową daje funkcję liniową, co jest dziwne, ale tak jest, i wtedy
+    jest problem bo nie da się znaleźć minimum///// generalnie to jest jakiś bug, to jak jest tworzony obiekt klasy
+    Poly, to jak się go stworzy tak: Poly(func) to wychodzi liniowa, a jak się przekopiuj wartość func i zrobi
+    Poly(wartość func) to wychodzi normalnie kwadratowa........... ///// dla parametrów: funkcja Booth'a, x0=(0,0)
+    d = (10,1)
