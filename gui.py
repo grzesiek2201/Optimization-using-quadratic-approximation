@@ -25,11 +25,14 @@ class Worker(QObject):
 
     def __init__(self, func=None):
         super().__init__()
-        self.func = func
+        try:
+            self.func = func
+        except Exception:
+            print("exception in thread")
 
-    def run(self, func=None):
+    def run(self, output):
         print("worker started")#func()
-        self.func()
+        output["error_state_and_message"].append(self.func())
         self.finished.emit()
 
 # this one works, even though it should not be used
@@ -207,14 +210,17 @@ class Ui_MainWindow(object):
         # self.optimize_thr = Worker(self.optimize)
         # self.optimize_thr.finished.connect(self.optimize)
         # self.optimize_thr.start()
+        output_state = {
+            "error_state_and_message": [],
+        }
         # create QThread object
         self.algorithm_thread = QThread()
         # create a worker object
-        self.algorithm_worker = Worker(self.optimize)
+        self.algorithm_worker = Worker(func=self.optimize)
         # move worker object to the thread
         self.algorithm_worker.moveToThread(self.algorithm_thread)
         # connect signals and slots
-        self.algorithm_thread.started.connect(self.algorithm_worker.run)
+        self.algorithm_thread.started.connect(lambda: self.algorithm_worker.run(output=output_state))
         self.algorithm_worker.finished.connect(self.algorithm_thread.quit)
         self.algorithm_worker.finished.connect(self.algorithm_worker.deleteLater)
         self.algorithm_thread.finished.connect(self.algorithm_thread.deleteLater)
@@ -226,6 +232,23 @@ class Ui_MainWindow(object):
         # final results
         self.algorithm_thread.finished.connect(lambda: self.pushButton.setEnabled(True))
         self.algorithm_thread.finished.connect(lambda: self.progress_label.hide())
+        self.algorithm_thread.finished.connect(lambda: print(f"{output_state = }"))
+        self.algorithm_thread.finished.connect(lambda: self.show_warning(output_state))
+
+    def show_warning(self, error_info):
+        """ Either shows a warning or not, based on the state_flag value """
+        print("show_warning")
+        print(f"{error_info['error_state_and_message'] = }")
+        if error_info["error_state_and_message"][0][0] == 0:
+            return
+        elif error_info["error_state_and_message"][0][0] == -1:
+            msg = QMessageBox()
+            msg.setWindowTitle("Błąd")
+            msg.setIcon(QMessageBox.Warning)
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.setText(f"Wprowadzone dane mogą być nieprawidłowe.\nObliczenia nie zostały wykonane.")
+            msg.setDetailedText(f"\nTreść błędu:\n{error_info['error_state_and_message'][0][1]}")
+            x = msg.exec_()
 
     def optimize(self):
         try:
@@ -236,14 +259,9 @@ class Ui_MainWindow(object):
                 self.plot_results(results, processed_data)
         except Exception as e:
             print(e)
-            msg = QMessageBox()
-            msg.setWindowTitle("Błąd")
-            msg.setIcon(QMessageBox.Warning)
-            msg.setStandardButtons(QMessageBox.Ok)
-            msg.setText(f"Wprowadzone dane mogą być nieprawidłowe.")
-            msg.setDetailedText(f"\nTreść błędu:\n{e}")
-            x = msg.exec_()
-            return
+            return -1, e
+        else:
+            return 0, ""
 
     def get_data(self):
         func = self.lineEdit.text()
@@ -265,10 +283,15 @@ class Ui_MainWindow(object):
             "l": l,
             "w": w
         }
+        if len(x0) != len(d):
+            e = "Wektor wartości początkowej musi być tego samego wymiaru, co wektor kierunku poszukiwań."
+            raise Exception(e)
         return data
 
     def process_the_data(self, data):
         func_org = translate_input(data["func"])
+        if func_org == None:
+            raise Exception("Wprowadzone równanie nie jest prawidłowe.")
         func_order = len(func_org.atoms(smp.Symbol))
         iso_func = smp.lambdify([x1, x2], func_org, 'numpy')
         x = np.array([x1, x2, x3, x4, x5])
