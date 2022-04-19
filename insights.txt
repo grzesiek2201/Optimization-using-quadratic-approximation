@@ -1,5 +1,5 @@
 - ogarnąć jak interpretować długość przedziału, na razie jest to odcinek wartości tau, ale lepiej jeśli byłaby to
-    zmiana wszystkich parametrów razem (pierwiastek z sumy kwadratów)
+    zmiana wszystkich parametrów razem (pierwiastek z sumy kwadratów) **
 
 - problem jeśli x0=(-3, -2.8), d=(0, -1), w=2; może dla ujemnego x0 odwraca się liczenie d? idk
 
@@ -11,4 +11,6 @@
     jest problem bo nie da się znaleźć minimum///// generalnie to jest jakiś bug, to jak jest tworzony obiekt klasy
     Poly, to jak się go stworzy tak: Poly(func) to wychodzi liniowa, a jak się przekopiuj wartość func i zrobi
     Poly(wartość func) to wychodzi normalnie kwadratowa........... ///// dla parametrów: funkcja Booth'a, x0=(0,0)
-    d = (10,1)
+    d = (10,1) **
+
+- thread z optymalizacją nie jest w żaden sposób zabijany przy zamykaniu aplikacji, trzeba to naprawić **
