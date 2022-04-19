@@ -106,11 +106,11 @@ def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.0
         # x_max = x0 + w * d  ###############??????????????????
         # x_next = x0 + tau_n * d  ###############??????????????????
         # cond = abs(x_next) - abs(x_max)  ###############??????????????????
-        if tau_n < a_min:
-            tau_n = a_min
+        if tau_n < a:   # was a_min
+            tau_n = a
             break
-        if tau_n > c_max:
-            tau_n = c_max
+        if tau_n > c:   # was c_max
+            tau_n = c
             break
             # or tau_n > c_max:# or abs(x_next) - abs(x_max) > 0:# or tau_n < a or tau_n > c:
             # print(f"tau_n < a or tau_n > c_max, {tau_n =}")
