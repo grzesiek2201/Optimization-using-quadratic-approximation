@@ -11,6 +11,13 @@ from PyQt5 import QtWidgets
 if __name__ == '__main__':
 
     app = QtWidgets.QApplication(sys.argv)
+
+    # Open the style sheet file and read it
+    with open('style.qss', 'r') as f:
+        style = f.read()
+    # Set the current style sheet
+    app.setStyleSheet(style)
+
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
@@ -20,9 +27,9 @@ if __name__ == '__main__':
     # func_org = translate_input("-(x1-3)^3+(x2-7)^2")
     # func_org = translate_input("x1^2+x2^2")  # sphere function
     # func_org = translate_input("100*(x2-x1^2)^2+(1-x1)^2")  # Rosenbrock function - something's
-    # quite right with this one
+    # not quite right with this one
     # func_org = translate_input("(x1 + 2*x2 -7)^2 + (2*x1 + x2 - 5)^2")  # Booth function
-    # func_org = translate_input("(1.5-x1+x1*x2)^2 + (2.25-x1_x1*x2^2)^2 + (2.625-x1+x1*x2^3)^2")  # Beale function
+    # func_org = translate_input("(1.5-x1+x1*x2)^2 + (2.25-x1-x1*x2^2)^2 + (2.625-x1+x1*x2^3)^2")  # Beale function
     # func_org = translate_input("(x1^2+x2-11)^2 + (x1+x2^2-7)^2")  # Himmelblau's function
     # # func_org = translate_input("-cos(x1)*cos(x2)*exp(-((x1-pi)^2+(x2-pi)^2))")  # Easom function - the point
     # # won't move because one of the while loop condition is always met (f(a)-f(c)<e)
