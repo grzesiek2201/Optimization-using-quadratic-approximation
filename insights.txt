@@ -14,3 +14,9 @@
     d = (10,1) **
 
 - thread z optymalizacją nie jest w żaden sposób zabijany przy zamykaniu aplikacji, trzeba to naprawić **
+
+- wizualizacja aproksymacji kwadratowej
+
+- tryb krokowy
+
+- wyświetlanie wyników
