@@ -2,6 +2,9 @@ from sympy import Poly
 import numpy as np
 import sympy as smp
 import matplotlib.pyplot as plt
+import logging
+
+logging.basicConfig(filename='progress_log.log', level=logging.INFO)
 
 x1, x2, x3, x4, x5, tau, d = smp.symbols('x1 x2 x3 x4 x5 tau d')
 
@@ -21,12 +24,12 @@ def substitute(func, xes=(x1, x2), values=(1, 1)):
 
 
 def quadr_approx(func, a, b, c):
-    if a == b:
-        a -= 0.001
-    if a == c:
-        a -= 0.001
-    if b == c:
-        c += 0.001
+    # if a == b:
+    #     a -= 0.00001
+    # if a == c:
+    #     a -= 0.00001
+    # if b == c:
+    #     c += 0.00001
     return ((func(a)*(tau-b)*(tau-c)) / ((a-b)*(a-c)) + (func(b)*(tau-a)*(tau-c)) / ((b-a)*(b-c)) +
             (func(c)*(tau-a)*(tau-b)) / ((c-a)*(c-b)))
 
@@ -63,12 +66,8 @@ def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.0
     """
     tau_n = None
     b = (a + c) / 2
-    c_max = c
-    a_min = a
     iteration = 0
-    consequent_x = [[x] for x in list(x0)]  # [x0[0]], [x0[1]]]
-    # cond_1 = abs(c - a)
-    # cond_3 = abs(func(a) - func(c))
+    consequent_x = [[x] for x in list(x0)]
     break_condition = None
     while True:  # 3 conditions for the while loop
         if iteration >= num_of_iterations:
@@ -93,23 +92,28 @@ def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.0
             print("***********")
             print(e)
             print("***********")
+            raise Exception("Wektor zmiennych musi być tego samego wymiaru, co wektor wartości początkowych "
+                            "oraz wektor poszukiwań.\n" + str(e))
         print(f"{tau_n = }")
+
+        ####
+        logging.info(
+            f"a={round(a, 3)}\t\tb={round(b, 3)}\t\tc={round(c, 3)}\t\t{tau_n=}\t\t\t{x0 + tau_n * d=}\t\tbreak_condition={break_condition}")
+        ####
 
         # if tau_n is not in [a, c] then end the algorithm, the optimum a or c for which func() has the lowest value?
 
         # if tau_n is at a or c
         if tau_n == a or tau_n == c: ######### not well tested yet
+            break_condition = 1
             break
 
-        # if tau_n is outside the specified range,
-        # return the value of which the function takes the smaller value
-        # x_max = x0 + w * d  ###############??????????????????
-        # x_next = x0 + tau_n * d  ###############??????????????????
-        # cond = abs(x_next) - abs(x_max)  ###############??????????????????
         if tau_n < a:   # was a_min
+            break_condition = 1
             tau_n = a
             break
         if tau_n > c:   # was c_max
+            break_condition = 1
             tau_n = c
             break
             # or tau_n > c_max:# or abs(x_next) - abs(x_max) > 0:# or tau_n < a or tau_n > c:
@@ -125,8 +129,6 @@ def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.0
 
         for i in range(len(x0)):
             consequent_x[i].append((x0 + tau_n * d)[i])
-        # consequent_x[0].append((x0 + tau_n * d)[0])  # was tau_n / 2
-        # consequent_x[1].append((x0 + tau_n * d)[1])  # was tau_n / 2
 
         if b < tau_n:
             if func(b) >= func(tau_n):
@@ -151,15 +153,15 @@ def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.0
                 b = b
                 c = c
         else:  # tau_n == b, czyli b jest w minimum
-            a = b
-            c = b
+            # a = b
+            # c = b
             iteration += 1
-            break_condition = 3###################
+            break_condition = 1###################
             break
         iteration += 1
         # print(iteration)
 
-        if abs(c-a) < epsilon1:
+        if abs(c-a) < epsilon1 or abs(c-b) < epsilon1 or abs(b-a) < epsilon1:  # second condition added because of errors when approximating with Poly
             break_condition = 1
             break
         if abs(func(a) - func(c)) < epsilon2:
@@ -173,14 +175,12 @@ def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.0
     else:
         tau = 0
     print(tau)
-    print(f"x0({x0} + tau({tau} * d{d} = optimized_x")
+    print(f"x0({x0}) + tau({tau} * d{d}) = optimized_x")
     optimized_x = x0 + tau * d
     print(f"{optimized_x = }")
 
     for i in range(len(x0)):
         consequent_x[i].append(optimized_x[i])
-    # consequent_x[0].append(optimized_x[0])
-    # consequent_x[1].append(optimized_x[1])
 
     data = {
         "steps_x": consequent_x,
@@ -189,3 +189,151 @@ def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.0
     }
 
     return data
+
+
+def algorithm_step(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.001, num_of_iterations=20,
+                   iteration=0, consequent_x=None, b=0):
+    """ Runs one step of the algorithm.
+
+        Parameters:
+            func(sympy lambdified): The
+
+        Returns:
+                algorithm_data = {
+                    "steps_x": consequent_x,
+                    "optimized_x": optimized_x,
+                    "iterations": iteration,
+                    "range": (a, c),
+                    "func": func,
+                    "x0": x0,
+                    "d": d,
+                    "l": num_of_iterations,
+                    "e1": epsilon1,
+                    "e2": epsilon2,
+                    "end": break_condition,
+                    "b": b
+    }
+
+    """
+    tau_n = None
+    b = b
+    iteration = iteration
+    # consequent_x = [[x] for x in list(x0)]  # [x0[0]], [x0[1]]]
+    break_condition = None
+
+    approx = None
+
+    for _ in range(1):
+        # 3 conditions for the while loop
+        if iteration >= num_of_iterations:
+            break_condition = 2
+            break
+        approx = quadr_approx(func, a, b, c)
+
+        # #testing
+        print(f"iteration: {iteration}, a={a}, b={b}, c={c}")
+
+        try:
+            tau_n, _ = quadratic_minimum(approx)
+        except Exception as e:
+            print("***********")
+            print(e)
+            print("***********")
+            raise Exception("Wektor zmiennych musi być tego samego wymiaru, co wektor wartości początkowych "
+                            "oraz wektor poszukiwań.\n" + str(e))
+        print(f"{tau_n = }")
+
+        # if tau_n is not in [a, c] then end the algorithm, the optimum a or c for which func() has the lowest value?
+
+        # if tau_n is at a or c
+        if tau_n == a or tau_n == c: ######### not well tested yet
+            break_condition = 1
+            break
+
+        if tau_n < a:   # was a_min
+            break_condition = 1  # should it be 1?
+            tau_n = a
+            break
+        if tau_n > c:   # was c_max
+            break_condition = 1  # should it be 1?
+            tau_n = c
+            break
+
+        for i in range(len(x0)):
+            consequent_x[i].append((x0 + tau_n * d)[i])
+
+        if b < tau_n:
+            if func(b) >= func(tau_n):
+                a = b
+                b = tau_n
+                c = c
+            else:
+                a = a
+                b = b
+                c = tau_n
+        elif b > tau_n:
+            if func(b) >= func(tau_n):
+                a = a
+                c = b
+                b = tau_n
+            else:
+                a = tau_n
+                b = b
+                c = c
+        else:  # tau_n == b, czyli b jest w minimum
+            iteration += 1
+            break_condition = 1
+            break
+        iteration += 1
+
+        if abs(c-a) < epsilon1 or abs(c-b) < epsilon1 or abs(b-a) < epsilon1:  # second condition added because of errors when approximating with Poly
+            break_condition = 1
+            break
+        if abs(func(a) - func(c)) < epsilon2:
+            break_condition = 3
+            break
+
+    print(f"******* break condition = {break_condition} ********")
+
+    ####
+    logging.info(f"a={round(a, 3)}\t\tb={round(b, 3)}\t\tc={round(c, 3)}\t\t{tau_n=}\t\t\t{x0 + tau_n * d=}\t\tbreak_condition={break_condition}")
+    ####
+
+    if tau_n:
+        tau = tau_n
+    else:
+        tau = 0
+    print(tau)
+    print(f"x0({x0}) + tau({tau} * d{d}) = optimized_x")
+    optimized_x = x0 + tau * d
+    print(f"{optimized_x = }")
+
+    for i in range(len(x0)):
+        consequent_x[i].append(optimized_x[i])
+
+    tau_symbol = smp.symbols('tau')
+    approx_func = smp.lambdify(tau_symbol, approx, 'numpy')
+
+    algorithm_data = {
+        "steps_x": consequent_x,
+        "optimized_x": optimized_x,
+        "iterations": iteration,
+        "range": (a, c),
+        "func": func,
+        "x0": x0,
+        "d": d,
+        "l": num_of_iterations,
+        "e1": epsilon1,
+        "e2": epsilon2,
+        "end": break_condition,
+        "b": b,
+        "tau": tau,
+        "approx_func": approx_func,
+        "org_func": func,
+    }
+
+    return algorithm_data
+
+# break_condition = 1 - epsilon 1 (proximity of the section)
+# break_condition = 2 - iterations
+# break_condition = 3 - epsilon 2 (proximity of the values of the function at the ends of section)
