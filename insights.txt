@@ -1,5 +1,5 @@
 - ogarnąć jak interpretować długość przedziału, na razie jest to odcinek wartości tau, ale lepiej jeśli byłaby to
-    zmiana wszystkich parametrów razem (pierwiastek z sumy kwadratów) **
+    zmiana wszystkich parametrów razem (pierwiastek z sumy kwadratów) /// ogarnięte **
 
 - problem jeśli x0=(-3, -2.8), d=(0, -1), w=2; może dla ujemnego x0 odwraca się liczenie d? idk
 
@@ -11,12 +11,18 @@
     jest problem bo nie da się znaleźć minimum///// generalnie to jest jakiś bug, to jak jest tworzony obiekt klasy
     Poly, to jak się go stworzy tak: Poly(func) to wychodzi liniowa, a jak się przekopiuj wartość func i zrobi
     Poly(wartość func) to wychodzi normalnie kwadratowa........... ///// dla parametrów: funkcja Booth'a, x0=(0,0)
-    d = (10,1) **
+    d = (10,1) /// powodem jest prawdopodobnie przybliżanie wartości podczas tworzenia obiektu klasy Poly, na razie
+    zostało to rozwiązane warunkiem w pętli if (abs(c-b) < epsilon1 or abs(b-a) < epsilon1) **
 
-- thread z optymalizacją nie jest w żaden sposób zabijany przy zamykaniu aplikacji, trzeba to naprawić **
+- thread z optymalizacją nie jest w żaden sposób zabijany przy zamykaniu aplikacji, trzeba to naprawić /// naprawione **
 
-- wizualizacja aproksymacji kwadratowej
+- wizualizacja aproksymacji kwadratowej /// jest **
 
-- tryb krokowy
+- tryb krokowy /// jest **
 
-- wyświetlanie wyników
+- wyświetlanie wyników /// jest **
+
+- step_mode działa ale niepoprawnie, inna ilość iteracji między standardowym a step_mode + jak się wejdzie w step_mode
+    to potem trzeba dokończyć, bo inaczej się nie da wyjść, a jak się odkliknie przycisk trybu krokowego to w ogóle
+    się nie da skończyć
+   ilość iteracji jest niepoprawna, szczególnie pierwsza i ostatnia, i pierwszy krok wykonuje się dwa razy chyba // działa **
