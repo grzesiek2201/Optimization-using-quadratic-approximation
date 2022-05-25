@@ -19,8 +19,8 @@ import numpy as np
 from parsing import x1, x2, x3, x4, x5, tau, d, translate_input
 import sympy as smp
 import time
-from pyqtgraph import PlotWidget, plot
 import pyqtgraph as pg
+from matplotlib.figure import Figure
 
 
 # this one blocks the GUI, even though is recommended for use
@@ -52,10 +52,10 @@ class Worker(QObject):
 #     def run(self):
 #         self.func()
 
-class Ui_MainWindow(object):
+class Ui_MainWindow(QWidget):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(884, 611)
+        MainWindow.resize(1080, 611)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
@@ -132,7 +132,8 @@ class Ui_MainWindow(object):
 
         function_list = ["x1^2+x2^2", "100*(x2-x1^2)^2+(1-x1)^2", "(x1 + 2*x2 -7)^2 + (2*x1 + x2 - 5)^2",
                          "(1.5-x1+x1*x2)^2 + (2.25-x1-x1*x2^2)^2 + (2.625-x1+x1*x2^3)^2",
-                         "(x1^2+x2-11)^2 + (x1+x2^2-7)^2", "-cos(x1)*cos(x2)*exp(-((x1-pi)^2+(x2-pi)^2))"]
+                         "(x1^2+x2-11)^2 + (x1+x2^2-7)^2", "-cos(x1)*cos(x2)*exp(-((x1-pi)^2+(x2-pi)^2))",
+                         "x1^4+x2^4-x1^2-x2^2"]
         self.function_combobox.addItems(function_list)
         #######################################################################
 
@@ -204,14 +205,20 @@ class Ui_MainWindow(object):
         # add a horizontal layout
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.frame)
         self.horizontalLayout.setObjectName("horizontalLayout")
+        # add a frame to horizontal layout and add a vertical layout to that frame
+        self.frame_2 = QtWidgets.QFrame(self)
+        self.horizontalLayout.addWidget(self.frame_2)
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.frame_2)
+        self.verticalLayout.setObjectName('verticalLayout')
         # create figure and canvas
         self.figure = plt.figure()
         self.figure.patch.set_facecolor("None")
         self.canvas = FigureCanvas(self.figure)
         self.canvas.setStyleSheet("background-color:transparent;")
-        # self.toolbar = NavigationToolbar(self.canvas, self)
-        # add canvas
-        self.horizontalLayout.addWidget(self.canvas)
+        self.toolbar = NavigationToolbar(self.canvas, self)
+        # add canvas to vertical layout
+        self.verticalLayout.addWidget(self.canvas)
+        self.verticalLayout.addWidget(self.toolbar)
         # add popup attribute
         self.popup = None
         #######################################################################
@@ -273,6 +280,7 @@ class Ui_MainWindow(object):
                 # algorithm
                 # first step with data from input
                 results = self.run_algorithm(processed_data, step_mode=True)
+                self.show_approx_func(results)
                 # report the progress
                 self.write_solution_to_textedit(results)
                 if processed_data["order"] == 2:
@@ -283,6 +291,9 @@ class Ui_MainWindow(object):
                     while not self.next_step:
                         QtWidgets.QApplication.processEvents()
                         time.sleep(0.05)
+                    # reset the variable
+                    self.next_step = False
+                    results = self.run_algorithm(results, step_mode=True)
                     # report the progress
                     self.write_solution_to_textedit(results)
                     # show normal function and quadratic approximation function with new tau
@@ -290,9 +301,14 @@ class Ui_MainWindow(object):
                     # show isohypse
                     if processed_data["order"] == 2:
                         self.plot_results(results, processed_data)
-                    # reset the variable
-                    self.next_step = False
-                    results = self.run_algorithm(results, step_mode=True)
+                # show popup with info
+                msg = QMessageBox()
+                msg.setWindowTitle("Rozwiązanie")
+                msg.setIcon(QMessageBox.Information)
+                msg.setStandardButtons(QMessageBox.Ok)
+                msg.setText(f"Znaleziono rozwiązanie.")
+                x = msg.exec_()
+                # change the button text
                 self.pushButton.setText("Szukaj rozwiązania")
             # if normal mode
             elif not self.step_mode:
@@ -358,7 +374,6 @@ class Ui_MainWindow(object):
 
     def get_data(self):
         func = self.function_combobox.currentText()
-        # func = self.lineEdit.text()
         x0 = self.lineEdit_2.text()
         d = self.lineEdit_3.text()
         e1 = float(self.lineEdit_4.text())
@@ -400,7 +415,6 @@ class Ui_MainWindow(object):
         a = 0  # np.sqrt(np.sum(np.power(x0[0], 2))) # was x[0]
 
         w = data["w"]  # / np.sqrt(np.sum(np.power(d, 2)))
-        # print(f"{w = }")
         c = a + w
 
         func_org = substitute(func=func_org, xes=x,
@@ -414,8 +428,8 @@ class Ui_MainWindow(object):
             "range": (a, c),
             "x0": x0,
             "d": d,
-            "e1": data["e1"],
-            "e2": data["e2"],
+            "e1": data["e2"],
+            "e2": data["e1"],
             "l": data["l"],
             "w": w,
             # for step_mode
@@ -423,6 +437,8 @@ class Ui_MainWindow(object):
             "steps_x": [[x] for x in list(x0)],
             "optimized_x": x0,
             "b": (a+c)/2,
+            "tau": 0,
+            "approx_func": None
         }
         return processed_data
 
@@ -445,8 +461,12 @@ class Ui_MainWindow(object):
             iteration = processed_data["iterations"]
             consequent_x = processed_data["steps_x"]
             b = processed_data["b"]
+            tau = processed_data["tau"]
+            approx_func = processed_data["approx_func"]
+            opt_x = processed_data["optimized_x"]
             return algorithm_step(func=func, a=a, c=c, d=d, x0=x0, epsilon1=e1, epsilon2=e2, num_of_iterations=l,
-                                  iteration=iteration, consequent_x=consequent_x, b=b)
+                                  iteration=iteration, consequent_x=consequent_x, b=b, prev_tau=tau,
+                                  prev_approx_func=approx_func, prev_optimized_x=opt_x)
         else:
             return algorithm(func=func, a=a, c=c, d=d, x0=x0, epsilon1=e1, epsilon2=e2, num_of_iterations=l)
 
@@ -484,7 +504,8 @@ class Ui_MainWindow(object):
         self.figure.clear()
 
         # create bar plot
-        plt.contour(x_val, y_val, z_val, 50, cmap="RdGy")
+        plt.contourf(x_val, y_val, z_val, 50, cmap="RdGy") #cmap="RdGy"
+        plt.colorbar()
 
         # refresh canvas
         self.canvas.draw()
@@ -495,12 +516,14 @@ class Ui_MainWindow(object):
         solution_output_text = f"Liczba iteracji: {results['iterations']}\n"
         for i in range(opt_x.size):
             solution_output_text += f"x{i}: {round(opt_x[i], round_value)}\n"
+        if results["end"] is not None:
+            solution_output_text += f"\nWarunek zatrzymania: {results['end']}"
 
         self.output_text_window.setText(solution_output_text)
         # self.output_text_window.setText("Rozwiązanie wynosi: " + str(results["optimized_x"]))
 
     def closeEvent(self, event):  # not needed
-        print("close event")
+        self.popup = None
 
     def change_step_mode(self):
         self.step_mode = not self.step_mode
@@ -517,7 +540,7 @@ class Ui_MainWindow(object):
         tau = data["tau"]
         func = data["org_func"]
         approx_func = data["approx_func"]
-        x = np.linspace(a-abs(0.3*a), c+abs(0.3*c), resolution)
+        x = np.linspace(a-abs(2*a), c+abs(2*c), resolution)
         y = func(x)
         y_approx = approx_func(x)
 
@@ -526,18 +549,24 @@ class Ui_MainWindow(object):
 
         self.approx_plot.clear()
 
-        org_plot = self.approx_plot.plot(x, y, pen=pen_org)
-        approx_plot = self.approx_plot.plot(x, y_approx, pen=pen_approx)
+        self.approx_plot.addLegend()
+        org_plot = self.approx_plot.plot(x, y, pen=pen_org, name='funkcja celu')
+        approx_plot = self.approx_plot.plot(x, y_approx, pen=pen_approx, name='aproksymacja kwadratowa')
         self.approx_plot.plot([a, c, b], [approx_func(a), approx_func(c), approx_func(b)], pen=None, symbol='o')
-        self.approx_plot.plot([tau], [approx_func(tau)], pen=None, symbol='o', symbolPen=pg.mkPen(color=(255, 0, 255), width=0),
-              symbolBrush=pg.mkBrush(0, 255, 255, 255),
-              symbolSize=7)
+        self.approx_plot.plot([tau], [approx_func(tau)], pen=None, symbol='o',
+                              symbolPen=pg.mkPen(color=(255, 0, 255), width=0),
+                              symbolBrush=pg.mkBrush(0, 255, 255, 255), symbolSize=7)
+
+    def close_event(self, event):
+        self.popup = None
 
     def show_popup(self):
         self.popup = PopUp()
         self.popup.setWindowTitle("Kwadratowa aproksymacja funkcji")
         self.popup.resize(600, 700)
         self.popup.show()
+
+        self.popup.closeEvent = lambda event: self.close_event(event)
 
         # add a layout
         self.horizontalLayout_approx = QtWidgets.QHBoxLayout()
@@ -556,7 +585,8 @@ class Ui_MainWindow(object):
 class PopUp(QWidget):
     def __init__(self):
         super().__init__()
-
+    def closeEvent(self, event):
+        self.close()
 
 if __name__ == "__main__":
     import sys
