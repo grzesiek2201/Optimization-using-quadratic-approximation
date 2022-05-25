@@ -26,3 +26,9 @@
     to potem trzeba dokończyć, bo inaczej się nie da wyjść, a jak się odkliknie przycisk trybu krokowego to w ogóle
     się nie da skończyć
    ilość iteracji jest niepoprawna, szczególnie pierwsza i ostatnia, i pierwszy krok wykonuje się dwa razy chyba // działa **
+
+- dla sin(x1)*sin(x2) jest error, jeśli któraś ze składowych kierunku jest 0, bo wtedy aproksymacja jest 0 i nie można
+    wykonać optymalizacji, to nie jest błąd a słabość metody, warto to opisać w sprawku!
+
+- Easom x0=(2,2), d=(1,1), w=3              -cos(x1)*cos(x2)*exp(-((x1-pi)^2+(x2-pi)^2))
+- Beale ? nic w ogóle nie znajduje          (1.5-x1+x1*x2)^2 + (2.25-x1-x1*x2^2)^2 + (2.625-x1+x1*x2^3)^2
