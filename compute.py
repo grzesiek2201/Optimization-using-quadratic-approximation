@@ -10,6 +10,7 @@ x1, x2, x3, x4, x5, tau, d = smp.symbols('x1 x2 x3 x4 x5 tau d')
 
 
 def substitute(func, xes=(x1, x2), values=(1, 1)):
+    tau = smp.symbols('tau')
     for x, val in zip(xes, values):
         func = func.subs(x, val)
     # func = func.subs(x1, values[0])
@@ -75,6 +76,8 @@ def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.0
             break
         # print(f"{Poly(func_org) = }, {a = }, {b = }, {c = }")
         approx = quadr_approx(func, a, b, c)
+        if approx == 0:
+            print("approx is 0, cannot process")
         # print(Poly(approx))
 
         # #testing
@@ -186,13 +189,14 @@ def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.0
         "steps_x": consequent_x,
         "optimized_x": optimized_x,
         "iterations": iteration,
+        "end": break_condition
     }
 
     return data
 
 
 def algorithm_step(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.001, num_of_iterations=20,
-                   iteration=0, consequent_x=None, b=0):
+                   iteration=0, consequent_x=None, b=0, prev_tau=0, prev_approx_func=None, prev_optimized_x=None):
     """ Runs one step of the algorithm.
 
         Parameters:
@@ -215,6 +219,25 @@ def algorithm_step(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon
     }
 
     """
+    # data from previous iteration
+    prev_algorithm_data = {
+        "steps_x": consequent_x,
+        "optimized_x": prev_optimized_x,
+        "iterations": iteration,
+        "range": (a, c),
+        "func": func,
+        "x0": x0,
+        "d": d,
+        "l": num_of_iterations,
+        "e1": epsilon1,
+        "e2": epsilon2,
+        "end": None,
+        "b": b,
+        "tau": prev_tau,
+        "approx_func": prev_approx_func,
+        "org_func": func,
+    }
+
     tau_n = None
     b = b
     iteration = iteration
@@ -227,7 +250,9 @@ def algorithm_step(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon
         # 3 conditions for the while loop
         if iteration >= num_of_iterations:
             break_condition = 2
-            break
+            prev_algorithm_data["end"] = break_condition
+            return prev_algorithm_data
+
         approx = quadr_approx(func, a, b, c)
 
         # #testing
@@ -296,7 +321,10 @@ def algorithm_step(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon
     print(f"******* break condition = {break_condition} ********")
 
     ####
-    logging.info(f"a={round(a, 3)}\t\tb={round(b, 3)}\t\tc={round(c, 3)}\t\t{tau_n=}\t\t\t{x0 + tau_n * d=}\t\tbreak_condition={break_condition}")
+    try:
+        logging.info(f"a={round(a, 3)}\t\tb={round(b, 3)}\t\tc={round(c, 3)}\t\t{tau_n=}\t\t\t{x0 + tau_n * d=}\t\tbreak_condition={break_condition}")
+    except Exception:
+        pass
     ####
 
     if tau_n:
