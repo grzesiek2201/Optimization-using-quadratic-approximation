@@ -32,3 +32,11 @@
 
 - Easom x0=(2,2), d=(1,1), w=3              -cos(x1)*cos(x2)*exp(-((x1-pi)^2+(x2-pi)^2))
 - Beale ? nic w ogóle nie znajduje          (1.5-x1+x1*x2)^2 + (2.25-x1-x1*x2^2)^2 + (2.625-x1+x1*x2^3)^2
+
+do raportu
+#################
+- jako pokazanie że punkt startowy ma znaczenie - Himmelblau, tam są 4 minima lokalne: f(3,2)=0, f(-2.805118, 3.131312)=0, f(-3.779310, -3.283186)=0, f(3.584428, -1.848126)=0
+- całkowicie nie działa Beale bo jest spieprzona, tak samo sin(x1)*sin(x2)*exp(-x1^2-x2^2)
+- na Boothe'a można pokazać, że tylko w jednym kierunku się minimalizuje, bo inaczej idzie 'pod górkę', tutaj też jest odporne na długie przedziały poszukiwań
+- jako pokazanie, że jak za duży przedział to znajdzie inne rozwiązanie - Himmelblau: x0=(-3.8, -3.3) (min. lokalne), d=(8, 2), w=20 to jedno rozwiązanie, w=22 to drugie rozwiązanie
+#################
