@@ -14,12 +14,12 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from compute import algorithm, substitute, algorithm_step
-import nums_from_string
 import numpy as np
 from parsing import x1, x2, x3, x4, x5, tau, d, translate_input
 import sympy as smp
 import time
 import pyqtgraph as pg
+import re
 from matplotlib.figure import Figure
 
 
@@ -54,6 +54,7 @@ class Worker(QObject):
 
 class Ui_MainWindow(QWidget):
     def setupUi(self, MainWindow):
+        MainWindow.setWindowIcon(QtGui.QIcon('icon.ico'))
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1080, 611)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
@@ -133,7 +134,7 @@ class Ui_MainWindow(QWidget):
         function_list = ["x1^2+x2^2", "100*(x2-x1^2)^2+(1-x1)^2", "(x1 + 2*x2 -7)^2 + (2*x1 + x2 - 5)^2",
                          "(1.5-x1+x1*x2)^2 + (2.25-x1-x1*x2^2)^2 + (2.625-x1+x1*x2^3)^2",
                          "(x1^2+x2-11)^2 + (x1+x2^2-7)^2", "-cos(x1)*cos(x2)*exp(-((x1-pi)^2+(x2-pi)^2))",
-                         "x1^4+x2^4-x1^2-x2^2"]
+                         "x1^4+x2^4-x1^2-x2^2", "(x1+2*x2-7)^2+(2*x1+x2-5)^2"]
         self.function_combobox.addItems(function_list)
         #######################################################################
 
@@ -257,8 +258,8 @@ class Ui_MainWindow(QWidget):
         self.pushButton.setText(_translate("MainWindow", "Szukaj rozwiązania"))
         self.label_3.setText(_translate("MainWindow", "d"))
         self.label_5.setText(_translate("MainWindow", "ε2"))
-        self.label_6.setText(_translate("MainWindow", "L"))
-        self.label_7.setText(_translate("MainWindow", "w"))
+        self.label_6.setText(_translate("MainWindow", "iteracje"))
+        self.label_7.setText(_translate("MainWindow", "długość"))
         self.lineEdit_5.setText(_translate("MainWindow", "0.001"))
         # self.lineEdit.setText(_translate("MainWindow", "x1^2+x2^2"))
         self.label_2.setText(_translate("MainWindow", "x0"))
@@ -374,14 +375,18 @@ class Ui_MainWindow(QWidget):
 
     def get_data(self):
         func = self.function_combobox.currentText()
-        x0 = self.lineEdit_2.text()
-        d = self.lineEdit_3.text()
+        x0_str = self.lineEdit_2.text()
+        d_str = self.lineEdit_3.text()
         e1 = float(self.lineEdit_4.text())
         e2 = float(self.lineEdit_5.text())
         l = float(self.lineEdit_6.text())
         w = float(self.lineEdit_7.text())
-        x0 = np.array(nums_from_string.get_nums(x0))
-        d = np.array(nums_from_string.get_nums(d))
+        x0 = re.findall("[-+]?[.]?[\d]+(?:,\d\d\d)*[\.]?\d*(?:[eE][-+]?\d+)?", x0_str)
+        x0 = np.array([float(x) for x in x0])
+        d = re.findall("[-+]?[.]?[\d]+(?:,\d\d\d)*[\.]?\d*(?:[eE][-+]?\d+)?", d_str)
+        d = np.array([float(d_) for d_ in d])
+        # x0 = np.array(nums_from_string.get_nums(x0))
+        # d = np.array(nums_from_string.get_nums(d))
         # zabezpieczyć przed złym podaniem danych, np. 0.5/3 daje dwie liczby
         data = {
             "func": func,
@@ -515,7 +520,7 @@ class Ui_MainWindow(QWidget):
         opt_x = results["optimized_x"]
         solution_output_text = f"Liczba iteracji: {results['iterations']}\n"
         for i in range(opt_x.size):
-            solution_output_text += f"x{i}: {round(opt_x[i], round_value)}\n"
+            solution_output_text += f"x{i+1}: {round(opt_x[i], round_value)}\n"
         if results["end"] is not None:
             solution_output_text += f"\nWarunek zatrzymania: {results['end']}"
 
