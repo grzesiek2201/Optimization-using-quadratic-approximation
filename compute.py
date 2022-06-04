@@ -185,6 +185,13 @@ def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.0
     for i in range(len(x0)):
         consequent_x[i].append(optimized_x[i])
 
+    if break_condition == 1:
+        break_condition = "szer. przedziału"
+    elif break_condition == 2:
+        break_condition = "liczba iteracji"
+    elif break_condition == 3:
+        break_condition = "wartość funkcji"
+
     data = {
         "steps_x": consequent_x,
         "optimized_x": optimized_x,
@@ -341,6 +348,13 @@ def algorithm_step(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon
 
     tau_symbol = smp.symbols('tau')
     approx_func = smp.lambdify(tau_symbol, approx, 'numpy')
+
+    if break_condition == 1:
+        break_condition = "szer. przedziału"
+    elif break_condition == 2:
+        break_condition = "liczba iteracji"
+    elif break_condition == 3:
+        break_condition = "wartość funkcji"
 
     algorithm_data = {
         "steps_x": consequent_x,
