@@ -258,8 +258,8 @@ class Ui_MainWindow(QWidget):
         self.pushButton.setText(_translate("MainWindow", "Szukaj rozwiązania"))
         self.label_3.setText(_translate("MainWindow", "d"))
         self.label_5.setText(_translate("MainWindow", "ε2"))
-        self.label_6.setText(_translate("MainWindow", "iteracje"))
-        self.label_7.setText(_translate("MainWindow", "długość"))
+        self.label_6.setText(_translate("MainWindow", "iteracje L"))
+        self.label_7.setText(_translate("MainWindow", "długość w"))
         self.lineEdit_5.setText(_translate("MainWindow", "0.001"))
         # self.lineEdit.setText(_translate("MainWindow", "x1^2+x2^2"))
         self.label_2.setText(_translate("MainWindow", "x0"))
@@ -523,6 +523,7 @@ class Ui_MainWindow(QWidget):
             solution_output_text += f"x{i+1}: {round(opt_x[i], round_value)}\n"
         if results["end"] is not None:
             solution_output_text += f"\nWarunek zatrzymania: {results['end']}"
+        solution_output_text += f"\nWartość funkcji w pkt. optymalnym: {round(results['func_val_at_min'], 5)}"
 
         self.output_text_window.setText(solution_output_text)
         # self.output_text_window.setText("Rozwiązanie wynosi: " + str(results["optimized_x"]))
