@@ -74,20 +74,12 @@ def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.0
         if iteration >= num_of_iterations:
             break_condition = 2
             break
-        # print(f"{Poly(func_org) = }, {a = }, {b = }, {c = }")
         approx = quadr_approx(func, a, b, c)
         if approx == 0:
             print("approx is 0, cannot process")
-        # print(Poly(approx))
 
         # #testing
         print(f"iteration: {iteration}, a={a}, b={b}, c={c}")
-        # t = np.linspace(-25, 25, 1000)
-        # plt.figure()
-        # plt.plot(t, func(t))
-        # plt.scatter([a, b, c], [func(a), func(b), func(c)])
-        # plt.show()
-        # #testing
 
         try:
             tau_n, _ = quadratic_minimum(approx)
@@ -119,50 +111,33 @@ def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.0
             break_condition = 1
             tau_n = c
             break
-            # or tau_n > c_max:# or abs(x_next) - abs(x_max) > 0:# or tau_n < a or tau_n > c:
-            # print(f"tau_n < a or tau_n > c_max, {tau_n =}")
-            # a_val = func(a)
-            # c_val = func(c)
-            # if a_val < c_val:
-            #     tau_n = 0
-            # else:
-            #     tau_n = w
-            # break_condition = 3#################
-            # break
 
         for i in range(len(x0)):
             consequent_x[i].append((x0 + tau_n * d)[i])
 
         if b < tau_n:
             if func(b) >= func(tau_n):
-                # print(f"{b} < {tau_n} && {func(b)} >= {func(tau_n)}")
                 a = b
                 b = tau_n
                 c = c
             else:
-                # print(f"{b} < {tau_n} && {func(b)} < {func(tau_n)}")
                 a = a
                 b = b
                 c = tau_n
         elif b > tau_n:
             if func(b) >= func(tau_n):
-                # print(f"{b} >= {tau_n} && {func(b)} >= {func(tau_n)}")
                 a = a
                 c = b
                 b = tau_n
             else:
-                # print(f"{b} >= {tau_n} && {func(b)} < {func(tau_n)}")
                 a = tau_n
                 b = b
                 c = c
         else:  # tau_n == b, czyli b jest w minimum
-            # a = b
-            # c = b
             iteration += 1
             break_condition = 1###################
             break
         iteration += 1
-        # print(iteration)
 
         if abs(c-a) < epsilon1 or abs(c-b) < epsilon1 or abs(b-a) < epsilon1:  # second condition added because of errors when approximating with Poly
             break_condition = 1
@@ -185,6 +160,8 @@ def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.0
     for i in range(len(x0)):
         consequent_x[i].append(optimized_x[i])
 
+    func_at_min = func(tau)
+
     if break_condition == 1:
         break_condition = "szer. przedziału"
     elif break_condition == 2:
@@ -196,7 +173,8 @@ def algorithm(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon2=0.0
         "steps_x": consequent_x,
         "optimized_x": optimized_x,
         "iterations": iteration,
-        "end": break_condition
+        "end": break_condition,
+        "func_val_at_min": func_at_min
     }
 
     return data
@@ -248,7 +226,6 @@ def algorithm_step(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon
     tau_n = None
     b = b
     iteration = iteration
-    # consequent_x = [[x] for x in list(x0)]  # [x0[0]], [x0[1]]]
     break_condition = None
 
     approx = None
@@ -277,16 +254,16 @@ def algorithm_step(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon
 
         # if tau_n is not in [a, c] then end the algorithm, the optimum a or c for which func() has the lowest value?
 
-        # if tau_n is at a or c
-        if tau_n == a or tau_n == c: ######### not well tested yet
-            break_condition = 1
-            break
+        # # if tau_n is at a or c
+        # if tau_n == a or tau_n == c: ######### not well tested yet
+        #     break_condition = 1
+        #     break
 
-        if tau_n < a:   # was a_min
+        if tau_n <= a:   # was a_min
             break_condition = 1  # should it be 1?
             tau_n = a
             break
-        if tau_n > c:   # was c_max
+        if tau_n >= c:   # was c_max
             break_condition = 1  # should it be 1?
             tau_n = c
             break
@@ -346,6 +323,8 @@ def algorithm_step(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon
     for i in range(len(x0)):
         consequent_x[i].append(optimized_x[i])
 
+    func_at_min = func(tau)
+
     tau_symbol = smp.symbols('tau')
     approx_func = smp.lambdify(tau_symbol, approx, 'numpy')
 
@@ -372,6 +351,7 @@ def algorithm_step(func, a=-1, c=1, d=(1, 0), x0=(0, 0), epsilon1=0.001, epsilon
         "tau": tau,
         "approx_func": approx_func,
         "org_func": func,
+        "func_val_at_min": func_at_min
     }
 
     return algorithm_data
